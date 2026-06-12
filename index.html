@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Logistika Axborot Oqimlari Tizimi | Mamatqulov Anvar Rashitovich — Vatan Universiteti</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root{
+    --bg:#0F1722; --bg2:#1A2332; --panel:#1E2A3A; --panel2:#243345;
+    --line:#2C3E54; --txt:#E6EDF5; --muted:#8499B0; --dim:#5C7088;
+    --emerald:#1D9E75; --emerald2:#27C495; --blue:#3B82F6; --cyan:#22D3EE;
+    --amber:#F59E0B; --red:#EF4444; --violet:#8B5CF6;
+    --radius:14px; --shadow:0 8px 30px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:'Inter','Segoe UI',system-ui,sans-serif;
+    background:var(--bg);
+    background-image:radial-gradient(1100px 600px at 85% -8%,rgba(29,158,117,.10),transparent 60%),
+                     radial-gradient(900px 500px at 0% 0%,rgba(59,130,246,.08),transparent 55%);
+    color:var(--txt); line-height:1.5; -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+  .wrap{max-width:1340px;margin:0 auto;padding:0 22px}
+
+  /* ===== HEADER ===== */
+  header{border-bottom:1px solid var(--line);background:rgba(15,23,34,.78);backdrop-filter:blur(10px);position:sticky;top:0;z-index:50}
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 0;gap:16px;flex-wrap:wrap}
+  .brand{display:flex;align-items:center;gap:13px}
+  .logo{width:46px;height:46px;border-radius:12px;background:linear-gradient(135deg,var(--emerald),var(--blue));
+        display:grid;place-items:center;box-shadow:0 4px 18px rgba(29,158,117,.4);flex:none}
+  .logo svg{width:26px;height:26px}
+  .brand h1{font-size:16.5px;font-weight:700;letter-spacing:-.2px;line-height:1.15}
+  .brand p{font-size:11.5px;color:var(--muted)}
+  .live{display:flex;align-items:center;gap:8px;background:rgba(29,158,117,.12);border:1px solid rgba(29,158,117,.35);
+        padding:7px 13px;border-radius:30px;font-size:12px;font-weight:600;color:var(--emerald2)}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--emerald2);box-shadow:0 0 0 0 rgba(39,196,149,.6);animation:pulse 1.8s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(39,196,149,.6)}70%{box-shadow:0 0 0 9px rgba(39,196,149,0)}100%{box-shadow:0 0 0 0 rgba(39,196,149,0)}}
+
+  /* ===== TABS ===== */
+  nav.tabs{display:flex;gap:4px;overflow-x:auto;padding:6px 0 0;scrollbar-width:none}
+  nav.tabs::-webkit-scrollbar{display:none}
+  .tab{background:none;border:none;color:var(--muted);font-size:13.5px;font-weight:600;font-family:inherit;
+       padding:11px 16px;border-radius:10px 10px 0 0;cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;transition:.15s}
+  .tab:hover{color:var(--txt);background:rgba(255,255,255,.03)}
+  .tab.active{color:var(--emerald2);border-bottom-color:var(--emerald2);background:rgba(29,158,117,.07)}
+
+  /* ===== HERO FLOW ===== */
+  .hero{margin:24px 0;background:linear-gradient(120deg,var(--panel),var(--bg2));border:1px solid var(--line);
+        border-radius:var(--radius);padding:22px;overflow:hidden;position:relative}
+  .hero-head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap;margin-bottom:6px}
+  .hero h2{font-size:18px;font-weight:700}
+  .hero .sub{font-size:12.5px;color:var(--muted);margin-top:3px}
+  .flowwrap{position:relative;height:230px;margin-top:6px}
+  #flowCanvas{width:100%;height:100%;display:block}
+  .flow-legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:10px;font-size:11.5px;color:var(--muted)}
+  .flow-legend span{display:inline-flex;align-items:center;gap:6px}
+  .flow-legend i{width:9px;height:9px;border-radius:2px;display:inline-block}
+
+  /* ===== SECTIONS ===== */
+  section.page{display:none;animation:fade .35s ease}
+  section.page.active{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+  .section-title{font-size:13px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--dim);margin:26px 0 13px;display:flex;align-items:center;gap:9px}
+  .section-title::before{content:"";width:3px;height:15px;background:var(--emerald2);border-radius:3px}
+
+  /* KPI grid */
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
+  .kpi{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:18px;position:relative;overflow:hidden;transition:.2s}
+  .kpi:hover{border-color:rgba(29,158,117,.45);transform:translateY(-2px)}
+  .kpi::after{content:"";position:absolute;top:0;left:0;width:100%;height:3px;background:var(--emerald2);opacity:.8}
+  .kpi.blue::after{background:var(--blue)} .kpi.amber::after{background:var(--amber)}
+  .kpi.violet::after{background:var(--violet)} .kpi.cyan::after{background:var(--cyan)} .kpi.red::after{background:var(--red)}
+  .kpi .label{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:7px;font-weight:500}
+  .kpi .val{font-size:29px;font-weight:800;letter-spacing:-.6px;margin:9px 0 4px;font-variant-numeric:tabular-nums}
+  .kpi .delta{font-size:11.5px;font-weight:600}
+  .up{color:var(--emerald2)} .down{color:var(--red)} .flat{color:var(--muted)}
+  .kpi .ic{position:absolute;right:15px;top:16px;opacity:.16;width:34px;height:34px}
+
+  /* cards */
+  .grid{display:grid;gap:16px}
+  .g2{grid-template-columns:1.5fr 1fr} .g2e{grid-template-columns:1fr 1fr}
+  .g3{grid-template-columns:repeat(3,1fr)}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:18px}
+  .card h3{font-size:14.5px;font-weight:700;margin-bottom:3px}
+  .card .csub{font-size:11.5px;color:var(--muted);margin-bottom:14px}
+  .chart-box{position:relative;height:280px}
+  .chart-sm{height:230px}
+
+  /* live feed */
+  .feed{max-height:330px;overflow-y:auto}
+  .feed::-webkit-scrollbar{width:6px}.feed::-webkit-scrollbar-thumb{background:var(--line);border-radius:4px}
+  .ev{display:flex;gap:11px;padding:10px 4px;border-bottom:1px solid rgba(44,62,84,.5);font-size:12.5px;animation:slidein .4s ease}
+  @keyframes slidein{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:none}}
+  .ev .ico{width:30px;height:30px;border-radius:8px;flex:none;display:grid;place-items:center;font-size:14px}
+  .ev .meta{flex:1;min-width:0}
+  .ev .et{font-weight:600} .ev .ed{color:var(--muted);font-size:11px}
+  .ev .tm{color:var(--dim);font-size:11px;white-space:nowrap}
+  .bg-em{background:rgba(29,158,117,.16);color:var(--emerald2)} .bg-bl{background:rgba(59,130,246,.16);color:#7AAEFF}
+  .bg-am{background:rgba(245,158,11,.16);color:var(--amber)} .bg-cy{background:rgba(34,211,238,.16);color:var(--cyan)}
+  .bg-vi{background:rgba(139,92,246,.16);color:#B69BFF}
+
+  /* tables */
+  table{width:100%;border-collapse:collapse;font-size:12.8px}
+  th{text-align:left;color:var(--dim);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.4px;padding:9px 10px;border-bottom:1px solid var(--line)}
+  td{padding:11px 10px;border-bottom:1px solid rgba(44,62,84,.45);font-variant-numeric:tabular-nums}
+  tr:hover td{background:rgba(255,255,255,.02)}
+  .tag{padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;display:inline-block}
+  .t-grn{background:rgba(29,158,117,.16);color:var(--emerald2)} .t-amb{background:rgba(245,158,11,.16);color:var(--amber)}
+  .t-red{background:rgba(239,68,68,.16);color:#FF8080} .t-blu{background:rgba(59,130,246,.16);color:#7AAEFF}
+  .t-gry{background:rgba(132,153,176,.16);color:var(--muted)}
+  .abc{font-weight:800;font-size:13px}
+  .bar{height:6px;border-radius:4px;background:var(--line);overflow:hidden;min-width:60px}
+  .bar i{display:block;height:100%;border-radius:4px;background:var(--emerald2)}
+
+  /* 6-stage flow model */
+  .stages{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
+  .stage{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:14px;text-align:center;position:relative}
+  .stage .n{position:absolute;top:8px;right:10px;font-size:11px;font-weight:800;color:var(--dim)}
+  .stage .si{width:38px;height:38px;border-radius:10px;background:rgba(29,158,117,.14);display:grid;place-items:center;margin:0 auto 9px;font-size:18px}
+  .stage h4{font-size:12.5px;font-weight:700;margin-bottom:4px}
+  .stage p{font-size:10.5px;color:var(--muted);line-height:1.35}
+  .stage .cnt{margin-top:8px;font-size:18px;font-weight:800;color:var(--emerald2);font-variant-numeric:tabular-nums}
+
+  /* route canvas */
+  #routeCanvas{width:100%;height:340px;display:block;border-radius:10px;background:rgba(15,23,34,.5)}
+  .route-info{display:flex;gap:14px;flex-wrap:wrap;margin-top:12px}
+  .ri{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:11px 15px;flex:1;min-width:140px}
+  .ri .l{font-size:11px;color:var(--muted)} .ri .v{font-size:17px;font-weight:800;margin-top:2px}
+
+  /* filters & search */
+  .filters{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+  select,input[type=text]{background:var(--panel2);border:1px solid var(--line);color:var(--txt);
+       padding:9px 13px;border-radius:9px;font-size:13px;font-family:inherit;outline:none;transition:.15s}
+  select:focus,input:focus{border-color:var(--emerald2)}
+  .search-row{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap}
+  .search-row input{flex:1;min-width:220px}
+  .btn{background:var(--emerald);border:none;color:#fff;padding:9px 18px;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:.15s}
+  .btn:hover{background:var(--emerald2)}
+  .btn.ghost{background:var(--panel2);border:1px solid var(--line);color:var(--muted)}
+  .btn.ghost:hover{color:var(--txt);border-color:var(--emerald2)}
+
+  /* algorithm cards */
+  .algo{display:flex;align-items:center;justify-content:space-between;padding:13px 0;border-bottom:1px solid rgba(44,62,84,.45)}
+  .algo:last-child{border:none}
+  .algo .an{font-weight:600;font-size:13.5px} .algo .ad{font-size:11.5px;color:var(--muted)}
+  .cx{font-family:'SF Mono',Menlo,monospace;font-size:12.5px;font-weight:700;padding:4px 11px;border-radius:8px;background:rgba(59,130,246,.13);color:#7AAEFF}
+
+  .empty{text-align:center;padding:34px;color:var(--dim);font-size:13px}
+
+  /* footer */
+  footer{border-top:1px solid var(--line);margin-top:40px;padding:26px 0 36px;font-size:12px;color:var(--muted)}
+  .foot-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:22px}
+  footer h5{color:var(--txt);font-size:12.5px;font-weight:700;margin-bottom:9px}
+  footer p{line-height:1.7}
+  .copy{margin-top:22px;padding-top:16px;border-top:1px solid var(--line);font-size:11.5px;color:var(--dim);text-align:center}
+
+  @media(max-width:920px){.g2,.g2e,.g3{grid-template-columns:1fr}.stages{grid-template-columns:repeat(3,1fr)}}
+  @media(max-width:560px){.stages{grid-template-columns:repeat(2,1fr)}.brand h1{font-size:14px}.kpi .val{font-size:25px}}
+  @media(prefers-reduced-motion:reduce){*{animation:none!important}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 7h13v10H3z"/><path d="M16 10h4l1 3v4h-5"/><circle cx="7" cy="18" r="1.6"/><circle cx="18" cy="18" r="1.6"/>
+          </svg>
+        </div>
+        <div>
+          <h1>Logistika Axborot Oqimlari Tizimi</h1>
+          <p>Logistics Information Flow Management Platform · LIFMS</p>
+        </div>
+      </div>
+      <div class="live"><span class="dot"></span>JONLI MONITORING · <span id="clock">—</span></div>
+    </div>
+    <nav class="tabs" id="tabs">
+      <button class="tab active" data-tab="dash">Asosiy panel</button>
+      <button class="tab" data-tab="ware">Ombor &amp; Inventar</button>
+      <button class="tab" data-tab="trans">Transport &amp; Marshrut</button>
+      <button class="tab" data-tab="flow">Axborot oqimi</button>
+      <button class="tab" data-tab="algo">Algoritmlar</button>
+      <button class="tab" data-tab="search">Qidiruv</button>
+    </nav>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- HERO: live information flow (faqat Asosiy panel tabida ko'rinadi) -->
+  <div class="hero" id="heroFlow">
+    <div class="hero-head">
+      <div>
+        <h2>Real vaqt rejimida axborot oqimi</h2>
+        <p class="sub">Manbalardan markaziy bazaga, qayta ishlash va qaror qabul qilishgacha — har 3 soniyada yangilanadi</p>
+      </div>
+      <div class="live" style="background:rgba(59,130,246,.12);border-color:rgba(59,130,246,.35);color:#7AAEFF">
+        <span class="dot" style="background:#7AAEFF"></span>Bugun: <span id="flowToday">0</span> ta paket
+      </div>
+    </div>
+    <div class="flowwrap"><canvas id="flowCanvas"></canvas></div>
+    <div class="flow-legend">
+      <span><i style="background:var(--cyan)"></i> GPS / RFID / IoT</span>
+      <span><i style="background:var(--blue)"></i> Buyurtmalar (Orders)</span>
+      <span><i style="background:var(--amber)"></i> Ombor (WMS)</span>
+      <span><i style="background:var(--emerald2)"></i> Markaziy baza (PostgreSQL)</span>
+      <span><i style="background:var(--violet)"></i> Qaror &amp; monitoring</span>
+    </div>
+  </div>
+
+  <!-- ============ DASH ============ -->
+  <section class="page active" id="dash">
+    <div class="section-title">Asosiy ko'rsatkichlar</div>
+    <div class="kpis" id="kpiRow"></div>
+
+    <div class="grid g2" style="margin-top:18px">
+      <div class="card">
+        <h3>Buyurtmalar va jo'natmalar dinamikasi</h3>
+        <p class="csub">So'nggi 12 oy · qabul qilingan vs yetkazilgan</p>
+        <div class="chart-box"><canvas id="chOrders"></canvas></div>
+      </div>
+      <div class="card">
+        <h3>Jonli hodisalar oqimi</h3>
+        <p class="csub">tracking_events · real vaqt</p>
+        <div class="feed" id="liveFeed"></div>
+      </div>
+    </div>
+
+    <div class="grid g3" style="margin-top:16px">
+      <div class="card">
+        <h3>Jo'natmalar holati</h3>
+        <p class="csub">shipments.status taqsimoti</p>
+        <div class="chart-box chart-sm"><canvas id="chShipStatus"></canvas></div>
+      </div>
+      <div class="card">
+        <h3>Tashuvchilar bo'yicha hajm</h3>
+        <p class="csub">carriers · jo'natmalar soni</p>
+        <div class="chart-box chart-sm"><canvas id="chCarrier"></canvas></div>
+      </div>
+      <div class="card">
+        <h3>O'z vaqtida yetkazish (OTD)</h3>
+        <p class="csub">oylik on-time delivery %</p>
+        <div class="chart-box chart-sm"><canvas id="chOtd"></canvas></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ WAREHOUSE ============ -->
+  <section class="page" id="ware">
+    <div class="section-title">Ombor va inventar tahlili</div>
+    <div class="kpis" id="wareKpi"></div>
+
+    <div class="grid g2e" style="margin-top:18px">
+      <div class="card">
+        <h3>ABC tahlili (Pareto)</h3>
+        <p class="csub">Mahsulotlarning aylanma bo'yicha tasnifi · K = Q×P / Σ(Q×P)</p>
+        <div class="chart-box"><canvas id="chABC"></canvas></div>
+      </div>
+      <div class="card">
+        <h3>Omborlar bo'yicha bandlik</h3>
+        <p class="csub">capacity_units va foydalanish darajasi</p>
+        <div class="chart-box"><canvas id="chWareLoad"></canvas></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <h3>Inventar holati (core.inventory)</h3>
+      <p class="csub">qty − reserved_qty = mavjud qoldiq · FIFO tartibida</p>
+      <div style="overflow-x:auto">
+        <table id="invTable">
+          <thead><tr><th>Ombor</th><th>Mahsulot</th><th>SKU</th><th>Jami</th><th>Band</th><th>Mavjud</th><th>ABC</th><th>Holat</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ TRANSPORT ============ -->
+  <section class="page" id="trans">
+    <div class="section-title">Transport va marshrut optimallashtirish</div>
+    <div class="kpis" id="transKpi"></div>
+
+    <div class="card" style="margin-top:18px">
+      <h3>Dijkstra eng qisqa yo'l algoritmi</h3>
+      <p class="csub">Toshkent markaziy ombordan yetkazish nuqtalarigacha minimal masofa · O((V+E)·logV)</p>
+      <canvas id="routeCanvas"></canvas>
+      <div class="route-info" id="routeInfo"></div>
+    </div>
+
+    <div class="grid g2e" style="margin-top:16px">
+      <div class="card">
+        <h3>Transport vositalari foydalanishi</h3>
+        <p class="csub">vehicles · yuk hajmi / sig'im (capacity_kg)</p>
+        <div class="chart-box"><canvas id="chVeh"></canvas></div>
+      </div>
+      <div class="card">
+        <h3>Marshrutlar bo'yicha xarajat</h3>
+        <p class="csub">transport masalasi · Z = ΣΣ cᵢⱼxᵢⱼ → min</p>
+        <div class="chart-box"><canvas id="chCost"></canvas></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ INFO FLOW ============ -->
+  <section class="page" id="flow">
+    <div class="section-title">Axborotlarni yig'ish va qayta ishlash modeli</div>
+    <div class="stages" id="stages"></div>
+
+    <div class="grid g2" style="margin-top:20px">
+      <div class="card">
+        <h3>Xabarlar navbati (ops.messages)</h3>
+        <p class="csub">trigger fn_process_message orqali avtomatik qayta ishlash</p>
+        <div class="chart-box"><canvas id="chQueue"></canvas></div>
+      </div>
+      <div class="card">
+        <h3>Audit jurnali (audit.audit_log)</h3>
+        <p class="csub">so'nggi o'zgarishlar · INSERT / UPDATE</p>
+        <div class="feed" id="auditFeed"></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <h3>Ma'lumotlar bazasi sxemasi</h3>
+      <p class="csub">PostgreSQL · 3 ta sxema, 13 ta jadval, 3 ta trigger, 2 ta funksiya</p>
+      <div class="grid g3" style="gap:12px">
+        <div>
+          <div class="tag t-grn" style="margin-bottom:9px">core (6 jadval)</div>
+          <table><tbody id="schCore"></tbody></table>
+        </div>
+        <div>
+          <div class="tag t-blu" style="margin-bottom:9px">ops (6 jadval)</div>
+          <table><tbody id="schOps"></tbody></table>
+        </div>
+        <div>
+          <div class="tag t-amb" style="margin-bottom:9px">audit (1 jadval)</div>
+          <table><tbody id="schAudit"></tbody></table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ ALGORITHMS ============ -->
+  <section class="page" id="algo">
+    <div class="section-title">Algoritmlar va murakkablik tahlili</div>
+    <div class="grid g2e">
+      <div class="card">
+        <h3>Algoritm murakkabligi (Big-O)</h3>
+        <p class="csub">Logistika ma'lumotlarini qayta ishlashda qo'llanilgan algoritmlar</p>
+        <div id="algoList"></div>
+      </div>
+      <div class="card">
+        <h3>Murakkablik o'sishi (n → vaqt)</h3>
+        <p class="csub">turli n qiymatlarda nisbiy operatsiyalar soni</p>
+        <div class="chart-box"><canvas id="chBigO"></canvas></div>
+      </div>
+    </div>
+
+    <div class="grid g3" style="margin-top:16px">
+      <div class="card">
+        <h3>🗂️ ABC tahlil</h3>
+        <p class="csub" style="margin-bottom:8px">Mahsulotlarni logistika ahamiyati bo'yicha A/B/C guruhlarga ajratish.</p>
+        <p style="font-size:12px;color:var(--muted)">A — eng ko'p talab (≈80% aylanma), B — o'rtacha, C — kam talab. A toifa omborning chiqishiga yaqin joylashtiriladi.</p>
+      </div>
+      <div class="card">
+        <h3>📦 FIFO / LIFO</h3>
+        <p class="csub" style="margin-bottom:8px">Zaxiralarni boshqarish tartibi · O(1).</p>
+        <p style="font-size:12px;color:var(--muted)">FIFO — birinchi kirgan birinchi chiqadi (oziq-ovqat, dori). LIFO — qurilish materiallari uchun.</p>
+      </div>
+      <div class="card">
+        <h3>🧬 Genetik algoritm</h3>
+        <p class="csub" style="margin-bottom:8px">Katta hajmli marshrut masalalari uchun.</p>
+        <p style="font-size:12px;color:var(--muted)">Populyatsiya → moslashuv → tanlash → krossingover → mutatsiya. Optimal yechimga yaqinlashish.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SEARCH ============ -->
+  <section class="page" id="search">
+    <div class="section-title">Buyurtma va jo'natma qidiruvi</div>
+    <div class="card">
+      <div class="search-row">
+        <input type="text" id="sInput" placeholder="Buyurtma raqami (ORD-...), mijoz nomi yoki SKU bo'yicha qidiring...">
+        <button class="btn" id="sBtn">Qidirish</button>
+        <button class="btn ghost" id="sClear">Tozalash</button>
+      </div>
+      <div class="filters">
+        <select id="fStatus"><option value="">— Barcha holatlar —</option></select>
+        <select id="fCarrier"><option value="">— Barcha tashuvchilar —</option></select>
+      </div>
+      <div style="overflow-x:auto">
+        <table id="searchTable">
+          <thead><tr><th>Buyurtma</th><th>Mijoz</th><th>Jo'natma</th><th>Yo'nalish</th><th>Tashuvchi</th><th>ETA</th><th>Summa</th><th>Holat</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="empty" id="searchEmpty" style="display:none">Hech narsa topilmadi. Boshqa so'rov kiriting.</div>
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <h5>Tadqiqot mavzusi</h5>
+        <p>Logistik jarayonlarda axborot oqimlari va ularni boshqarish. Axborot oqimlariga ishlov berish algoritmlarini ishlab chiqish.</p>
+      </div>
+      <div>
+        <h5>Magistrlik dissertatsiyasi</h5>
+        <p><strong style="color:var(--emerald2)">Muallif: Mamatqulov Anvar Rashitovich</strong><br>Vatan Universiteti<br>Kommunikatsiya va axborot texnologiyalar kafedrasi<br>Toshkent — 2026</p>
+      </div>
+      <div>
+        <h5>Texnik ma'lumot</h5>
+        <p>Baza: PostgreSQL (core / ops / audit)<br>Frontend: HTML5, JavaScript, Chart.js<br>Algoritmlar: ABC, FIFO, Dijkstra, Transport masalasi, Genetik<br>Hosting: GitHub Pages (HTTPS)</p>
+      </div>
+    </div>
+    <div class="copy">© 2026 Akademik tadqiqot loyihasi · Demonstratsiya ma'lumotlari sintetik tarzda generatsiya qilingan</div>
+  </div>
+</footer>
+
+<script>
+/* ========================================================
+   DEMO DATA GENERATION (logistika axborot tizimi schema bo'yicha)
+======================================================== */
+const RND=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+const PICK=a=>a[RND(0,a.length-1)];
+const fmt=n=>n.toLocaleString('uz-UZ');
+const fmt1=n=>n.toLocaleString('uz-UZ',{maximumFractionDigits:1});
+
+const MONTHS=['Yan','Fev','Mar','Apr','May','Iyn','Iyl','Avg','Sen','Okt','Noy','Dek'];
+const CITIES=['Toshkent','Samarqand','Buxoro','Andijon','Namangan','Farg\'ona','Nukus','Qarshi','Urganch','Jizzax'];
+const WAREHOUSES=[
+  {id:1,name:'Toshkent MRK',cap:50000,city:'Toshkent'},
+  {id:2,name:'Samarqand RDC',cap:28000,city:'Samarqand'},
+  {id:3,name:'Buxoro DC',cap:18000,city:'Buxoro'},
+  {id:4,name:'Andijon DC',cap:22000,city:'Andijon'},
+  {id:5,name:'Farg\'ona DC',cap:15000,city:'Farg\'ona'},
+];
+const CARRIERS=['Own Fleet','UzAuto Logistics','Express Yetkazish','Asia Trans','Tezkor Cargo'];
+const PRODUCTS=['Widget A','Gadget B','Komponent C','Modul D','Sensor E','Kontroller F','Adapter G','Plata H','Korpus I','Kabel J','Batareya K','Displey L'];
+const CLIENTS=['ACME Corp','Texno Savdo','Mega Distrib','Sharq Trade','Inno Supply','Global Mart','Uz Retail','Prime Goods','Falcon LLC','Oriental Co'];
+const ST_STATUS=['created','in_transit','at_hub','out_for_delivery','delivered','delayed'];
+const ST_LABEL={created:'Yaratildi',in_transit:'Yo\'lda',at_hub:'Hub\'da',out_for_delivery:'Yetkazishda',delivered:'Yetkazildi',delayed:'Kechikdi'};
+const ST_TAG={created:'t-gry',in_transit:'t-blu',at_hub:'t-blu',out_for_delivery:'t-amb',delivered:'t-grn',delayed:'t-red'};
+
+// inventory rows
+const inventory=[];
+PRODUCTS.forEach((p,pi)=>{
+  WAREHOUSES.forEach(w=>{
+    if(Math.random()<0.62){
+      const qty=RND(40,1800), res=RND(0,Math.floor(qty*0.4)), price=RND(15,420);
+      inventory.push({wh:w.name,prod:p,sku:'SKU-'+String(pi+1).padStart(3,'0'),qty,res,avail:qty-res,price,turnover:qty*price});
+    }
+  });
+});
+// ABC classification
+const totT=inventory.reduce((s,r)=>s+r.turnover,0);
+inventory.sort((a,b)=>b.turnover-a.turnover);
+let cum=0;
+inventory.forEach(r=>{cum+=r.turnover;const sh=cum/totT;r.abc=sh<=0.8?'A':sh<=0.95?'B':'C';});
+
+// orders / shipments
+const orders=[];
+for(let i=0;i<140;i++){
+  const st=PICK(ST_STATUS);
+  const origin=PICK(WAREHOUSES);
+  const dest=PICK(CITIES);
+  orders.push({
+    ord:'ORD-'+(1000+i),
+    client:PICK(CLIENTS),
+    ship:'SHP-'+(5000+i),
+    route:origin.city+' → '+dest,
+    carrier:PICK(CARRIERS),
+    eta:RND(1,72)+' soat',
+    total:RND(2,180)*1000,
+    status:st
+  });
+}
+
+/* ========================================================
+   STATE / COUNTERS
+======================================================== */
+let todayPackets=RND(8400,9200);
+let activeOrders=orders.filter(o=>!['delivered'].includes(o.status)).length;
+const otdData=Array.from({length:12},()=>RND(86,97));
+const ordRecv=MONTHS.map(()=>RND(680,1240));
+const ordDel=ordRecv.map(v=>Math.floor(v*(0.86+Math.random()*0.1)));
+
+/* ========================================================
+   CHART DEFAULTS
+======================================================== */
+Chart.defaults.color='#8499B0';
+Chart.defaults.font.family="'Inter',sans-serif";
+Chart.defaults.font.size=11.5;
+const GRID={color:'rgba(44,62,84,.4)'};
+const EM='#27C495',BL='#3B82F6',AM='#F59E0B',CY='#22D3EE',VI='#8B5CF6',RD='#EF4444';
+const grad=(ctx,c1,c2)=>{const g=ctx.createLinearGradient(0,0,0,260);g.addColorStop(0,c1);g.addColorStop(1,c2);return g;};
+
+/* ========================================================
+   KPI CARDS
+======================================================== */
+function kpiCard(o){
+  return `<div class="kpi ${o.cls||''}">
+    <div class="label">${o.icon||''} ${o.label}</div>
+    <div class="val">${o.val}</div>
+    <div class="delta ${o.dcls||'flat'}">${o.delta||''}</div>
+  </div>`;
+}
+document.getElementById('kpiRow').innerHTML=[
+  {label:'Faol buyurtmalar',val:fmt(activeOrders),delta:'▲ 8.2% o\'tgan oyga',dcls:'up'},
+  {label:'Yo\'ldagi jo\'natmalar',val:fmt(orders.filter(o=>o.status==='in_transit').length),delta:'real vaqt',dcls:'flat',cls:'blue'},
+  {label:'O\'z vaqtida yetkazish',val:otdData.at(-1)+'%',delta:'▲ 2.1% maqsad 95%',dcls:'up',cls:'cyan'},
+  {label:'Inventar qiymati',val:fmt1(totT/1000)+' mln',delta:'so\'m · '+inventory.length+' pozitsiya',dcls:'flat',cls:'amber'},
+  {label:'Faol omborlar',val:WAREHOUSES.length,delta:'5 viloyatda',dcls:'flat',cls:'violet'},
+  {label:'Kechiktirilgan',val:fmt(orders.filter(o=>o.status==='delayed').length),delta:'▼ diqqat talab',dcls:'down',cls:'red'},
+].map(kpiCard).join('');
+
+document.getElementById('wareKpi').innerHTML=[
+  {label:'Jami SKU pozitsiyalar',val:fmt(inventory.length),delta:PRODUCTS.length+' mahsulot turi',dcls:'flat'},
+  {label:'A toifa (yuqori aylanma)',val:inventory.filter(r=>r.abc==='A').length,delta:'≈80% aylanma',dcls:'up'},
+  {label:'O\'rtacha bandlik',val:RND(68,82)+'%',delta:'omborlar bo\'yicha',dcls:'flat',cls:'amber'},
+  {label:'Band qilingan zaxira',val:fmt(inventory.reduce((s,r)=>s+r.res,0)),delta:'reserved_qty',dcls:'flat',cls:'blue'},
+].map(kpiCard).join('');
+
+document.getElementById('transKpi').innerHTML=[
+  {label:'Faol transport',val:RND(38,54),delta:'vehicles',dcls:'flat'},
+  {label:'O\'rtacha marshrut',val:RND(180,340)+' km',delta:'Dijkstra optimallashtirildi',dcls:'up',cls:'cyan'},
+  {label:'Transport xarajati',val:fmt1(RND(120,180)/10)+' mln',delta:'so\'m/oy · ▼ 11%',dcls:'up',cls:'amber'},
+  {label:'Yoqilg\'i tejash',val:RND(9,17)+'%',delta:'marshrutlash hisobiga',dcls:'up',cls:'violet'},
+].map(kpiCard).join('');
+
+/* ========================================================
+   CHARTS
+======================================================== */
+// Orders dynamics
+new Chart(document.getElementById('chOrders'),{
+  type:'line',
+  data:{labels:MONTHS,datasets:[
+    {label:'Qabul qilingan',data:ordRecv,borderColor:BL,backgroundColor:'rgba(59,130,246,.12)',fill:true,tension:.4,borderWidth:2,pointRadius:0},
+    {label:'Yetkazilgan',data:ordDel,borderColor:EM,backgroundColor:'rgba(29,158,117,.10)',fill:true,tension:.4,borderWidth:2,pointRadius:0},
+  ]},
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:10,padding:14}}},
+    scales:{x:{grid:{display:false}},y:{grid:GRID,beginAtZero:true}}}
+});
+// Shipment status doughnut
+const ss={};ST_STATUS.forEach(s=>ss[s]=orders.filter(o=>o.status===s).length);
+new Chart(document.getElementById('chShipStatus'),{
+  type:'doughnut',
+  data:{labels:ST_STATUS.map(s=>ST_LABEL[s]),datasets:[{data:Object.values(ss),
+    backgroundColor:['#5C7088',BL,CY,AM,EM,RD],borderWidth:0}]},
+  options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{position:'right',labels:{boxWidth:9,padding:8,font:{size:10.5}}}}}
+});
+// Carrier bar
+const cc={};CARRIERS.forEach(c=>cc[c]=orders.filter(o=>o.carrier===c).length);
+new Chart(document.getElementById('chCarrier'),{
+  type:'bar',
+  data:{labels:CARRIERS.map(c=>c.length>11?c.slice(0,10)+'…':c),datasets:[{data:Object.values(cc),backgroundColor:CY,borderRadius:6,barThickness:20}]},
+  options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:GRID,beginAtZero:true},y:{grid:{display:false}}}}
+});
+// OTD line
+new Chart(document.getElementById('chOtd'),{
+  type:'line',
+  data:{labels:MONTHS,datasets:[{data:otdData,borderColor:EM,backgroundColor:'rgba(29,158,117,.14)',fill:true,tension:.4,borderWidth:2,pointRadius:2,pointBackgroundColor:EM}]},
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false}},y:{grid:GRID,min:80,max:100,ticks:{callback:v=>v+'%'}}}}
+});
+// ABC
+const abcG={A:0,B:0,C:0};inventory.forEach(r=>abcG[r.abc]+=r.turnover);
+new Chart(document.getElementById('chABC'),{
+  type:'bar',
+  data:{labels:['A toifa','B toifa','C toifa'],datasets:[{label:'Aylanma (ming so\'m)',
+    data:[abcG.A/1000,abcG.B/1000,abcG.C/1000],backgroundColor:[EM,AM,'#5C7088'],borderRadius:8,barThickness:54}]},
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},
+    tooltip:{callbacks:{afterLabel:c=>{const t=['A','B','C'][c.dataIndex];return inventory.filter(r=>r.abc===t).length+' pozitsiya';}}}},
+    scales:{x:{grid:{display:false}},y:{grid:GRID,beginAtZero:true}}}
+});
+// Warehouse load
+new Chart(document.getElementById('chWareLoad'),{
+  type:'bar',
+  data:{labels:WAREHOUSES.map(w=>w.name),datasets:[
+    {label:'Bandlik %',data:WAREHOUSES.map(()=>RND(55,92)),backgroundColor:EM,borderRadius:6,barThickness:26}]},
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false}},y:{grid:GRID,max:100,ticks:{callback:v=>v+'%'}}}}
+});
+// Vehicle utilization
+new Chart(document.getElementById('chVeh'),{
+  type:'bar',
+  data:{labels:['AA-001','AA-014','AA-027','AA-039','AA-052','AA-061'],datasets:[
+    {label:'Yuklangan (kg)',data:[1700,1850,1200,1980,1450,1620],backgroundColor:BL,borderRadius:5,stack:'s'},
+    {label:'Bo\'sh sig\'im',data:[300,150,800,20,550,380],backgroundColor:'rgba(92,112,136,.4)',borderRadius:5,stack:'s'}]},
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:10,padding:12}}},scales:{x:{grid:{display:false},stacked:true},y:{grid:GRID,stacked:true,beginAtZero:true}}}
+});
+// Cost by route
+new Chart(document.getElementById('chCost'),{
+  type:'line',
+  data:{labels:['T→S','T→B','T→A','T→F','T→N','S→B','A→F'],datasets:[
+    {label:'Optimal',data:[2.1,3.4,4.2,4.8,3.1,1.4,1.1],borderColor:EM,backgroundColor:'rgba(29,158,117,.12)',fill:true,tension:.3,borderWidth:2,pointRadius:3},
+    {label:'Optimalsiz',data:[2.9,4.1,5.6,6.2,4.0,2.0,1.7],borderColor:RD,borderDash:[5,4],borderWidth:2,pointRadius:0,tension:.3}]},
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:10,padding:12}},tooltip:{callbacks:{label:c=>c.dataset.label+': '+c.parsed.y+' mln so\'m'}}},scales:{x:{grid:{display:false}},y:{grid:GRID,beginAtZero:true,ticks:{callback:v=>v+'M'}}}}
+});
+// Message queue
+new Chart(document.getElementById('chQueue'),{
+  type:'bar',
+  data:{labels:Array.from({length:12},(_,i)=>(i*2)+':00'),datasets:[
+    {label:'Qabul qilingan',data:Array.from({length:12},()=>RND(120,480)),backgroundColor:BL,borderRadius:4},
+    {label:'Qayta ishlangan',data:Array.from({length:12},()=>RND(110,460)),backgroundColor:EM,borderRadius:4}]},
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:10,padding:12}}},scales:{x:{grid:{display:false}},y:{grid:GRID,beginAtZero:true}}}
+});
+// Big-O
+const ns=[1,10,50,100,200,400];
+new Chart(document.getElementById('chBigO'),{
+  type:'line',
+  data:{labels:ns,datasets:[
+    {label:'O(1)',data:ns.map(()=>1),borderColor:EM,borderWidth:2,pointRadius:0,tension:.2},
+    {label:'O(log n)',data:ns.map(n=>Math.log2(n)+1),borderColor:CY,borderWidth:2,pointRadius:0,tension:.2},
+    {label:'O(n)',data:ns.map(n=>n),borderColor:BL,borderWidth:2,pointRadius:0,tension:.2},
+    {label:'O(n log n)',data:ns.map(n=>n*Math.log2(n)),borderColor:AM,borderWidth:2,pointRadius:0,tension:.2},
+    {label:'O(n²)',data:ns.map(n=>n*n/50),borderColor:RD,borderWidth:2,pointRadius:0,borderDash:[4,3],tension:.2}]},
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:10,padding:10,font:{size:10.5}}}},scales:{x:{grid:{display:false},title:{display:true,text:'n (ma\'lumotlar hajmi)'}},y:{grid:GRID,beginAtZero:true,max:800,title:{display:true,text:'operatsiyalar'}}}}
+});
+
+/* ========================================================
+   INVENTORY TABLE
+======================================================== */
+const abcTag={A:'t-grn',B:'t-amb',C:'t-gry'};
+document.querySelector('#invTable tbody').innerHTML=inventory.slice(0,16).map(r=>{
+  const lvl=r.avail<150?'t-red':r.avail<400?'t-amb':'t-grn';
+  const lt=r.avail<150?'Past':r.avail<400?'O\'rta':'Yetarli';
+  return `<tr><td>${r.wh}</td><td>${r.prod}</td><td style="color:var(--muted)">${r.sku}</td>
+    <td>${fmt(r.qty)}</td><td>${fmt(r.res)}</td><td style="font-weight:700">${fmt(r.avail)}</td>
+    <td><span class="tag ${abcTag[r.abc]} abc">${r.abc}</span></td>
+    <td><span class="tag ${lvl}">${lt}</span></td></tr>`;
+}).join('');
+
+/* ========================================================
+   6-STAGE FLOW MODEL
+======================================================== */
+const STAGES=[
+  {ic:'📡',h:'Yig\'ish',p:'GPS, RFID, IoT, buyurtma bazasi',k:'collect'},
+  {ic:'🔄',h:'Uzatish',p:'Tarmoq orqali markaziy bazaga',k:'transmit'},
+  {ic:'💾',h:'Saqlash',p:'PostgreSQL / bulutli baza',k:'store'},
+  {ic:'⚙️',h:'Qayta ishlash',p:'ERP, SCM, WMS, TMS · saralash',k:'process'},
+  {ic:'🎯',h:'Qaror',p:'Prognoz, optimallashtirish',k:'decide'},
+  {ic:'📊',h:'Monitoring',p:'Nazorat va tuzatish',k:'monitor'},
+];
+const stageCounts={};
+document.getElementById('stages').innerHTML=STAGES.map((s,i)=>{
+  stageCounts[s.k]=RND(800,1600);
+  return `<div class="stage"><div class="n">${i+1}</div><div class="si">${s.ic}</div>
+    <h4>${s.h}</h4><p>${s.p}</p><div class="cnt" id="st-${s.k}">${fmt(stageCounts[s.k])}</div></div>`;
+}).join('');
+
+/* SCHEMA tables */
+const schemaCore=[['products','SKU, nomi, vazn'],['clients','mijozlar'],['warehouses','omborlar, koordinata'],['inventory','qoldiq, band'],['carriers','tashuvchilar'],['vehicles','transport']];
+const schemaOps=[['orders','buyurtmalar (JSONB)'],['order_items','pozitsiyalar'],['shipments','jo\'natmalar'],['tracking_events','kuzatuv'],['tasks','vazifalar'],['messages','xabar navbati']];
+const schemaAudit=[['audit_log','barcha o\'zgarishlar jurnali (trigger orqali)']];
+const schRow=([n,d])=>`<tr><td style="font-family:monospace;color:var(--emerald2);font-weight:600">${n}</td><td style="color:var(--muted);font-size:11.5px">${d}</td></tr>`;
+document.getElementById('schCore').innerHTML=schemaCore.map(schRow).join('');
+document.getElementById('schOps').innerHTML=schemaOps.map(schRow).join('');
+document.getElementById('schAudit').innerHTML=schemaAudit.map(schRow).join('');
+
+/* ALGORITHM LIST */
+const ALGOS=[
+  ['Tasniflash (Classification)','Ma\'lumotlarni guruhlarga ajratish','O(n)'],
+  ['Chiziqli qidiruv','Tartiblanmagan ro\'yxatda qidiruv','O(n)'],
+  ['Binary Search','Tartiblangan ma\'lumotda qidiruv','O(log n)'],
+  ['Quick Sort','Logistika ma\'lumotlarini saralash','O(n log n)'],
+  ['Dijkstra','Eng qisqa marshrut','O((V+E)·logV)'],
+  ['FIFO / LIFO','Zaxira navbati','O(1)'],
+  ['Transport masalasi','Yuk taqsimoti optimallashtirish','O(n³)'],
+];
+document.getElementById('algoList').innerHTML=ALGOS.map(([n,d,c])=>
+  `<div class="algo"><div><div class="an">${n}</div><div class="ad">${d}</div></div><span class="cx">${c}</span></div>`).join('');
+
+/* ========================================================
+   SEARCH
+======================================================== */
+const fStatus=document.getElementById('fStatus'),fCarrier=document.getElementById('fCarrier');
+ST_STATUS.forEach(s=>fStatus.innerHTML+=`<option value="${s}">${ST_LABEL[s]}</option>`);
+[...new Set(orders.map(o=>o.carrier))].forEach(c=>fCarrier.innerHTML+=`<option value="${c}">${c}</option>`);
+function renderSearch(rows){
+  const tb=document.querySelector('#searchTable tbody');
+  document.getElementById('searchEmpty').style.display=rows.length?'none':'block';
+  document.getElementById('searchTable').style.display=rows.length?'table':'none';
+  tb.innerHTML=rows.slice(0,40).map(o=>`<tr>
+    <td style="font-weight:600">${o.ord}</td><td>${o.client}</td><td style="color:var(--muted)">${o.ship}</td>
+    <td>${o.route}</td><td>${o.carrier}</td><td>${o.eta}</td><td>${fmt(o.total)} so'm</td>
+    <td><span class="tag ${ST_TAG[o.status]}">${ST_LABEL[o.status]}</span></td></tr>`).join('');
+}
+function doSearch(){
+  const q=document.getElementById('sInput').value.trim().toLowerCase();
+  const st=fStatus.value,ca=fCarrier.value;
+  let r=orders.filter(o=>
+    (!q||o.ord.toLowerCase().includes(q)||o.client.toLowerCase().includes(q)||o.route.toLowerCase().includes(q))&&
+    (!st||o.status===st)&&(!ca||o.carrier===ca));
+  renderSearch(r);
+}
+document.getElementById('sBtn').onclick=doSearch;
+document.getElementById('sInput').addEventListener('keyup',e=>{if(e.key==='Enter')doSearch();});
+fStatus.onchange=doSearch;fCarrier.onchange=doSearch;
+document.getElementById('sClear').onclick=()=>{document.getElementById('sInput').value='';fStatus.value='';fCarrier.value='';renderSearch(orders);};
+renderSearch(orders);
+
+/* ========================================================
+   TABS
+======================================================== */
+document.getElementById('tabs').addEventListener('click',e=>{
+  const b=e.target.closest('.tab');if(!b)return;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  b.classList.add('active');
+  document.getElementById(b.dataset.tab).classList.add('active');
+  // Axborot oqimi animatsiyasi faqat "Asosiy panel"da ko'rinadi (boshqa tablarda takrorlanmasligi uchun)
+  document.getElementById('heroFlow').style.display = (b.dataset.tab==='dash') ? 'block' : 'none';
+  if(b.dataset.tab==='trans')drawRoute();
+});
+
+/* ========================================================
+   LIVE FEED (real-time simulation)
+======================================================== */
+const EVTYPES=[
+  {t:'Jo\'natma yo\'lga chiqdi',d:o=>o+' · '+PICK(CITIES),ic:'🚚',c:'bg-bl'},
+  {t:'Yetkazib berildi',d:o=>o+' · imzolandi',ic:'✓',c:'bg-em'},
+  {t:'Hub\'ga yetib keldi',d:o=>PICK(CITIES)+' tarqatish markazi',ic:'🏭',c:'bg-am'},
+  {t:'GPS yangilandi',d:()=>'koordinata · '+(RND(38,42)+RND(0,99)/100).toFixed(2)+'°N',ic:'📡',c:'bg-cy'},
+  {t:'Yangi buyurtma',d:o=>o+' · '+PICK(CLIENTS),ic:'📦',c:'bg-vi'},
+  {t:'Inventar yangilandi',d:()=>PICK(PRODUCTS)+' · qoldiq o\'zgardi',ic:'📊',c:'bg-em'},
+];
+const feed=document.getElementById('liveFeed'),auditFeed=document.getElementById('auditFeed');
+function tnow(){const d=new Date();return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')+':'+String(d.getSeconds()).padStart(2,'0');}
+function pushEvent(){
+  const e=PICK(EVTYPES),ref=PICK(['SHP-'+(5000+RND(0,140)),'ORD-'+(1000+RND(0,140))]);
+  const el=document.createElement('div');el.className='ev';
+  el.innerHTML=`<div class="ico ${e.c}">${e.ic}</div><div class="meta"><div class="et">${e.t}</div><div class="ed">${e.d(ref)}</div></div><div class="tm">${tnow()}</div>`;
+  feed.prepend(el);while(feed.children.length>14)feed.lastChild.remove();
+  // audit
+  const ops=['INSERT','UPDATE'],tbls=['ops.orders','ops.shipments','core.inventory'];
+  const a=document.createElement('div');a.className='ev';
+  const op=PICK(ops);
+  a.innerHTML=`<div class="ico ${op==='INSERT'?'bg-em':'bg-bl'}">${op==='INSERT'?'+':'~'}</div><div class="meta"><div class="et">${PICK(tbls)}</div><div class="ed">${op} · user: logistics_app</div></div><div class="tm">${tnow()}</div>`;
+  auditFeed.prepend(a);while(auditFeed.children.length>12)auditFeed.lastChild.remove();
+  // counters
+  todayPackets+=RND(2,7);document.getElementById('flowToday').textContent=fmt(todayPackets);
+  Object.keys(stageCounts).forEach(k=>{stageCounts[k]+=RND(0,4);const el2=document.getElementById('st-'+k);if(el2)el2.textContent=fmt(stageCounts[k]);});
+}
+for(let i=0;i<8;i++)pushEvent();
+setInterval(pushEvent,3000);
+setInterval(()=>document.getElementById('clock').textContent=tnow(),1000);
+document.getElementById('clock').textContent=tnow();
+
+/* ========================================================
+   HERO FLOW ANIMATION (information packets)
+======================================================== */
+const fc=document.getElementById('flowCanvas'),fx=fc.getContext('2d');
+let W=0,H=0,running=false,rafId=null,visible=true;
+const reduceMotion=window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+const sources=[
+  {x:.10,y:.18,c:CY,label:'GPS/IoT'},
+  {x:.10,y:.50,c:BL,label:'Orders'},
+  {x:.10,y:.82,c:AM,label:'WMS'},
+];
+const hub={x:.5,y:.5,c:EM},decide={x:.9,y:.5,c:VI};
+let packets=[];
+let lastTs=0,spawnAcc=0;
+
+// Reliable sizing via ResizeObserver (fixes wrong-size ghosting on load/font-swap)
+function syncSize(){
+  const r=fc.getBoundingClientRect();
+  if(r.width===0||r.height===0)return;
+  const dpr=Math.min(window.devicePixelRatio||1,2); // cap dpr for perf
+  const nw=Math.round(r.width*dpr),nh=Math.round(r.height*dpr);
+  if(fc.width!==nw||fc.height!==nh){fc.width=nw;fc.height=nh;}
+  fx.setTransform(dpr,0,0,dpr,0,0);
+  W=r.width;H=r.height;
+}
+if('ResizeObserver' in window){new ResizeObserver(syncSize).observe(fc);}
+else{window.addEventListener('resize',syncSize);}
+syncSize();
+
+// Pause animation when hero scrolled out of view (perf)
+if('IntersectionObserver' in window){
+  new IntersectionObserver(es=>{visible=es[0].isIntersecting;}).observe(fc);
+}
+
+function node(p,r,fill){fx.beginPath();fx.arc(p.x*W,p.y*H,r,0,Math.PI*2);fx.fillStyle=fill;fx.fill();}
+
+function spawn(){
+  const s=PICK(sources);
+  packets.push({
+    fromx:s.x,fromy:s.y,tox:hub.x,toy:hub.y,
+    t:0, spd:0.010+Math.random()*0.010,        // varied speed → no mechanical sync
+    jit:(Math.random()-0.5)*0.06,              // slight lane curvature
+    r:2.4+Math.random()*1.8, c:s.c, stage:1, a:0
+  });
+}
+
+function drawStatic(){            // reduced-motion fallback: static diagram
+  syncSize();fx.clearRect(0,0,W,H);
+  fx.lineWidth=1.2;
+  sources.forEach(s=>{fx.strokeStyle='rgba(132,153,176,.2)';fx.beginPath();fx.moveTo(s.x*W,s.y*H);fx.lineTo(hub.x*W,hub.y*H);fx.stroke();});
+  fx.strokeStyle='rgba(29,158,117,.3)';fx.beginPath();fx.moveTo(hub.x*W,hub.y*H);fx.lineTo(decide.x*W,decide.y*H);fx.stroke();
+  sources.forEach(s=>{node(s,7,s.c);fx.fillStyle='#8499B0';fx.font='10px Inter';fx.textAlign='center';fx.fillText(s.label,s.x*W,s.y*H-13);});
+  node(hub,15,'rgba(29,158,117,.25)');node(hub,9,EM);
+  fx.fillStyle='#E6EDF5';fx.font='bold 11px Inter';fx.fillText('PostgreSQL',hub.x*W,hub.y*H-22);
+  node(decide,13,'rgba(139,92,246,.25)');node(decide,8,VI);
+  fx.fillStyle='#B69BFF';fx.fillText('Qaror',decide.x*W,decide.y*H-19);
+}
+
+function frame(ts){
+  rafId=requestAnimationFrame(frame);
+  if(W===0||H===0){syncSize();return;}
+  const dt=lastTs?Math.min((ts-lastTs)/16.67,2.5):1; // normalize to ~60fps, clamp tab-switch jumps
+  lastTs=ts;
+  if(!visible){return;}            // skip drawing when off-screen, but keep timing
+
+  // spawn at steady rate independent of framerate
+  spawnAcc+=dt;
+  if(spawnAcc>=4){spawnAcc=0;if(packets.length<34)spawn();}
+
+  // FULL clear every frame (no ghosting)
+  fx.clearRect(0,0,W,H);
+
+  // static links
+  fx.lineWidth=1.2;
+  sources.forEach(s=>{fx.strokeStyle='rgba(132,153,176,.16)';fx.beginPath();fx.moveTo(s.x*W,s.y*H);fx.lineTo(hub.x*W,hub.y*H);fx.stroke();});
+  fx.strokeStyle='rgba(29,158,117,.26)';fx.beginPath();fx.moveTo(hub.x*W,hub.y*H);fx.lineTo(decide.x*W,decide.y*H);fx.stroke();
+
+  // packets
+  for(const p of packets){
+    p.t+=p.spd*dt;
+    if(p.a<1)p.a=Math.min(1,p.a+0.08*dt);
+    const tt=Math.min(p.t,1);
+    const ease=tt<.5?2*tt*tt:1-Math.pow(-2*tt+2,2)/2;
+    let x=p.fromx+(p.tox-p.fromx)*ease;
+    let y=p.fromy+(p.toy-p.fromy)*ease + Math.sin(ease*Math.PI)*p.jit; // gentle arc
+    fx.globalAlpha=p.a;
+    fx.beginPath();fx.arc(x*W,y*H,p.r,0,Math.PI*2);
+    fx.fillStyle=p.c;fx.shadowColor=p.c;fx.shadowBlur=7;fx.fill();
+    fx.shadowBlur=0;fx.globalAlpha=1;
+    if(p.t>=1&&p.stage===1){     // hand off to decision node
+      p.stage=2;p.fromx=hub.x;p.fromy=hub.y;p.tox=decide.x;p.toy=decide.y;
+      p.t=0;p.c=EM;p.jit=(Math.random()-0.5)*0.04;
+    }
+  }
+  packets=packets.filter(p=>!(p.stage===2&&p.t>=1));
+
+  // nodes
+  sources.forEach(s=>{node(s,7,s.c);fx.fillStyle='#8499B0';fx.font='10px Inter';fx.textAlign='center';fx.fillText(s.label,s.x*W,s.y*H-13);});
+  const pulse=11+Math.sin(ts/450)*3;
+  node(hub,pulse+4,'rgba(29,158,117,.18)');node(hub,9,EM);
+  fx.fillStyle='#E6EDF5';fx.font='bold 11px Inter';fx.textAlign='center';fx.fillText('PostgreSQL',hub.x*W,hub.y*H-22);
+  node(decide,13,'rgba(139,92,246,.22)');node(decide,8,VI);
+  fx.fillStyle='#B69BFF';fx.fillText('Qaror',decide.x*W,decide.y*H-19);
+}
+
+function start(){
+  if(running)return;          // guard: never start two loops
+  running=true;
+  if(reduceMotion){drawStatic();return;}
+  rafId=requestAnimationFrame(frame);
+}
+start();
+
+/* ========================================================
+   DIJKSTRA ROUTE VISUALIZATION
+======================================================== */
+function drawRoute(){
+  const c=document.getElementById('routeCanvas'),x=c.getContext('2d');
+  const r=c.getBoundingClientRect();c.width=r.width*devicePixelRatio;c.height=r.height*devicePixelRatio;
+  x.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
+  const w=r.width,h=r.height;x.clearRect(0,0,w,h);
+  const nodes=[
+    {n:'Toshkent',x:.13,y:.5,hub:true},
+    {n:'Jizzax',x:.36,y:.26},
+    {n:'Samarqand',x:.55,y:.5},
+    {n:'Qarshi',x:.55,y:.82},
+    {n:'Buxoro',x:.80,y:.36},
+    {n:'Navoiy',x:.80,y:.72},
+  ];
+  const edges=[[0,1,68],[1,2,82],[0,3,140],[2,4,95],[3,5,120],[2,3,60],[4,5,55],[1,3,90]];
+  const path=[[0,1],[1,2],[2,4]]; // optimal shortest path highlighted
+  const isPath=(a,b)=>path.some(p=>(p[0]===a&&p[1]===b)||(p[0]===b&&p[1]===a));
+  // edges
+  edges.forEach(([a,b,w2])=>{
+    const A=nodes[a],B=nodes[b],hl=isPath(a,b);
+    x.strokeStyle=hl?EM:'rgba(132,153,176,.25)';x.lineWidth=hl?3:1.4;
+    x.beginPath();x.moveTo(A.x*w,A.y*h);x.lineTo(B.x*w,B.y*h);x.stroke();
+    x.fillStyle=hl?EM:'#5C7088';x.font=(hl?'bold ':'')+'10px Inter';x.textAlign='center';
+    x.fillText(w2+'km',(A.x+B.x)/2*w,(A.y+B.y)/2*h-5);
+  });
+  // nodes
+  nodes.forEach((nd,i)=>{
+    const onPath=path.some(p=>p.includes(i));
+    x.beginPath();x.arc(nd.x*w,nd.y*h,nd.hub?14:10,0,7);
+    x.fillStyle=nd.hub?EM:onPath?'rgba(29,158,117,.5)':'#243345';
+    x.strokeStyle=onPath?EM:'#2C3E54';x.lineWidth=2;x.fill();x.stroke();
+    x.fillStyle='#E6EDF5';x.font='bold 11px Inter';x.textAlign='center';
+    x.fillText(nd.n,nd.x*w,nd.y*h-19);
+  });
+  document.getElementById('routeInfo').innerHTML=[
+    ['Optimal marshrut','Toshkent → Jizzax → Samarqand → Buxoro'],
+    ['Umumiy masofa','245 km'],
+    ['Algoritm','Dijkstra · O((V+E)·logV)'],
+    ['Tejam','~28% (oddiy marshrutga nisbatan)'],
+  ].map(([l,v])=>`<div class="ri"><div class="l">${l}</div><div class="v" style="font-size:14px">${v}</div></div>`).join('');
+}
+</script>
+</body>
+</html>
